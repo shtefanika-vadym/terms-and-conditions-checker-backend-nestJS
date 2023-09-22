@@ -12,11 +12,14 @@ export class AppController {
   ) {}
 
   @Get()
-  getHello(): Promise<string> {
-    return this.puppeteerService.getPageContent(
-      'https://old.ms.ro/index.php?pag=26&doc=3229&pg=1',
-    );
-    return this.openAIService.getPageContent();
+  async getHello(): Promise<string> {
+    await this.openAIService.callOpenAIApi();
+
+    return 'Text processing complete!';
+    // return this.puppeteerService.getPageContent(
+    //   'https://old.ms.ro/index.php?pag=26&doc=3229&pg=1',
+    // );
+    // return this.openAIService.getPageContent();
     return this.googleService.getFirstPageUrlByQuery(
       'https://chat.openai.com/ terms and conditions',
     );

@@ -2,11 +2,12 @@ import { Injectable } from '@nestjs/common';
 import * as fs from 'fs-extra';
 import OpenAI from 'openai';
 import GPT3Tokenizer from 'gpt3-tokenizer';
+import * as process from 'process';
 
 @Injectable()
 export class OpenAIService {
-  private readonly model: string = 'gpt-3.5-turbo-16k';
-  private readonly MAX_TOKENS: number = 16384;
+  private readonly MAX_TOKENS: number =
+    +process.env.OPENAI_KEY_POINTS_MAX_TOKENS;
   private readonly openai: OpenAI = new OpenAI({
     apiKey: process.env.OPENAI_KEY,
   });
@@ -34,11 +35,11 @@ export class OpenAIService {
   ): Promise<string> {
     const response: OpenAI.Chat.ChatCompletion =
       await this.openai.chat.completions.create({
-        model: this.model,
+        model: process.env.OPENAI_KEY_POINTS_MODEL,
         messages: [
           {
             role: 'system',
-            content: `You are a competent artificial intelligence, specializing in distilling information into key points and summarizing. Based on the text below, identify and list the main points from the terms and conditions presented. These should be the most important, crucial to the gist of the discussion. Your aim is to provide a list that includes all terms and conditions in a summarised format. The answer should not exceed ${maxSummaryTokens} tokens.`,
+            content: `${process.env.OPENAI_KEY_POINTS_RESPONSE} ${maxSummaryTokens} tokens.`,
           },
           {
             role: 'user',
@@ -49,36 +50,25 @@ export class OpenAIService {
     return response.choices.at(0).message.content.trim();
   }
 
-  async differenceTS(text: string): Promise<any> {
+  async getUserViolatedTerms(terms: string): Promise<number[]> {
+    const siteTerms: string = `Site Terms: ${terms}`;
+    const userTerms: string = `User terms: + ${JSON.stringify(this.USER_TS)}`;
+
     const response: OpenAI.Chat.ChatCompletion =
       await this.openai.chat.completions.create({
-        model: this.model,
+        model: process.env.OPENAI_VIOLAIONS_MODEL,
         messages: [
           {
-            role: 'system',
-            content: `Get a valid JSON array of objects terms and conditions that are violated by these site terms and conditions.`,
-            // content: `You are a competent artificial intelligence, specializing in analyzing terms and conditions. The following is the site's terms and conditions: ${text}. Please identify and list the user terms and conditions that are violated by these site terms and conditions.
-            // Each child object from user has a property named "id" and a property named "title".
-            // The resulting JSON object should be in this format: [{"id":"number","title":"string"}]`,
-          },
-          {
             role: 'user',
-            content: `Site terms and conditions: ${text}`,
-          },
-          {
-            role: 'user',
-            content: `User terms and conditions ${this.USER_TS}`,
+            content:
+              siteTerms + userTerms + process.env.OPENAI_VIOLATIONS_RESPONSE,
           },
         ],
       });
-    console.log(
-      response.choices.at(0).message,
-      // JSON.parse(response.choices.at(0).message.content),
-    );
-    return response.choices.at(0).message;
+    return JSON.parse(response.choices.at(0).message.content);
   }
 
-  async getListPointsByChunks(chunks: string[]): Promise<string[]> {
+  async listPointsByChunks(chunks: string[]): Promise<string[]> {
     const keyPoints: string[] = await Promise.all(
       chunks.map(async (chunk: string): Promise<string> => {
         return await this.keyPointsExtraction(
@@ -95,11 +85,12 @@ export class OpenAIService {
   }
 
   async callOpenAIApi(): Promise<string> {
-    const text: string = await this.loadText('output.txt');
-    await this.differenceTS(text);
+    const terms: string = await this.loadText('output.txt');
+    const violations: number[] = await this.getUserViolatedTerms(terms);
+    console.log(violations);
     // const chunks: string[] = this.splitIntoChunks(text);
     //
-    // const keyPoints: string[] = await this.getListPointsByChunks(chunks);
+    // const keyPoints: string[] = await this.listPointsByChunks(chunks);
     // await this.saveToFile(keyPoints);
 
     return 'Done';

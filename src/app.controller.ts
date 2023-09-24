@@ -13,7 +13,9 @@ export class AppController {
 
   @Get()
   async getHello(): Promise<string> {
-    await this.openAIService.callOpenAIApi();
+    await this.openAIService.callOpenAIApi('fd', [
+      { id: 1, title: 'Accept users under 13 years' },
+    ]);
 
     return 'Text processing complete!';
     // return this.puppeteerService.getPageContent(

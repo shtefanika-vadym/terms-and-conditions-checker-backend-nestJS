@@ -50,9 +50,12 @@ export class OpenAIService {
     return response.choices.at(0).message.content.trim();
   }
 
-  async getUserViolatedTerms(terms: string): Promise<number[]> {
-    const siteTerms: string = `Site Terms: ${terms}`;
-    const userTerms: string = `User terms: + ${JSON.stringify(this.USER_TS)}`;
+  async getUserViolatedTerms(
+    terms: string[],
+    userTerms: any[],
+  ): Promise<number[]> {
+    const siteTermsProp: string = `Site Terms: ${terms.join('\n')}`;
+    const userTermsProp: string = `User terms: + ${JSON.stringify(userTerms)}`;
 
     const response: OpenAI.Chat.ChatCompletion =
       await this.openai.chat.completions.create({
@@ -61,7 +64,9 @@ export class OpenAIService {
           {
             role: 'user',
             content:
-              siteTerms + userTerms + process.env.OPENAI_VIOLATIONS_RESPONSE,
+              siteTermsProp +
+              userTermsProp +
+              process.env.OPENAI_VIOLATIONS_RESPONSE,
           },
         ],
       });
@@ -84,16 +89,16 @@ export class OpenAIService {
     await fs.writeFile('output.txt', response.join('\n'));
   }
 
-  async callOpenAIApi(): Promise<string> {
-    const terms: string = await this.loadText('output.txt');
-    const violations: number[] = await this.getUserViolatedTerms(terms);
-    console.log(violations);
-    // const chunks: string[] = this.splitIntoChunks(text);
-    //
-    // const keyPoints: string[] = await this.listPointsByChunks(chunks);
-    // await this.saveToFile(keyPoints);
+  async callOpenAIApi(siteTerms: string, userTerms: any[]): Promise<number[]> {
+    // const terms: string = await this.loadText('output.txt');
 
-    return 'Done';
+    const chunks: string[] = this.splitIntoChunks(siteTerms);
+    const termsKeyPoints: string[] = await this.listPointsByChunks(chunks);
+    const violatedTermsIds: number[] = await this.getUserViolatedTerms(
+      termsKeyPoints,
+      userTerms,
+    );
+    return violatedTermsIds;
   }
 
   splitIntoChunks(content: string): string[] {

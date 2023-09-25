@@ -139,4 +139,22 @@ export class OpenAIService {
       });
     return +response.choices.at(0).message.content;
   }
+
+  async rephraseTerm(title: string): Promise<string> {
+    const response: OpenAI.Chat.ChatCompletion =
+      await this.openai.chat.completions.create({
+        model: process.env.OPENAI_VIOLAIONS_MODEL,
+        messages: [
+          {
+            role: 'system',
+            content: process.env.OPENAI_REPHRASE_RESPONSE,
+          },
+          {
+            role: 'user',
+            content: title,
+          },
+        ],
+      });
+    return response.choices.at(0).message.content.trim();
+  }
 }

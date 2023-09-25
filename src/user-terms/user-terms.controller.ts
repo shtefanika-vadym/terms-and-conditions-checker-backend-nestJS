@@ -1,11 +1,10 @@
-import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Post, Query, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 import { UserTermsService } from 'src/user-terms/user-terms.service';
 import { UserId } from 'src/auth/user-id.decorator';
 import { UserTerm } from 'src/user-terms/user-terms.model';
 import { MessageResponse } from 'src/response/message-response';
 import { CreateUserTermDto } from 'src/user-terms/dto/create-user-term.dto';
-import { IdentifyViolatedTermsDto } from 'src/user-terms/dto/identify-violated-terms.dto';
 
 @UseGuards(JwtAuthGuard)
 @Controller('user-terms')
@@ -25,11 +24,16 @@ export class UserTermsController {
     return this.userTermsService.createUserTerm(userId, termDto);
   }
 
-  @Post('/identify-violated')
+  @Get('/identify-violated')
   async identifyViolatedTerms(
     @UserId() userId: number,
-    @Body() { site }: IdentifyViolatedTermsDto,
-  ): Promise<any> {
+    @Query('site') site: string,
+  ): Promise<UserTerm[]> {
     return this.userTermsService.identifyViolatedTerms(userId, site);
+  }
+
+  @Post('/rephrase')
+  async rephrase(@Body() dto: CreateUserTermDto): Promise<CreateUserTermDto> {
+    return this.userTermsService.rephrase(dto);
   }
 }

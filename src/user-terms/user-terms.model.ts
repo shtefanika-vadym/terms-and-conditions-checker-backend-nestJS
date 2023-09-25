@@ -14,7 +14,7 @@ export class UserTerm {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({ type: 'varchar', length: 255, nullable: false })
+  @Column({ type: 'varchar', length: 255, nullable: false, unique: true })
   title: string;
 
   @Column({ type: 'integer', nullable: false })

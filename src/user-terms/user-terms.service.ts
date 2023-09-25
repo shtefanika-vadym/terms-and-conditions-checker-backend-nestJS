@@ -10,6 +10,7 @@ import { OpenAIService } from 'src/openai/openai.service';
 import { SiteTermsService } from 'src/site-terms/site-terms.service';
 import { ViolatedTermsService } from 'src/violated-terms/violated-terms.service';
 import { Md5Service } from 'src/md5/md5.service';
+import { UsersService } from 'src/users/users.service';
 
 @Injectable()
 export class UserTermsService {
@@ -22,12 +23,13 @@ export class UserTermsService {
     private googleService: GoogleService,
     private openAIService: OpenAIService,
     private md5Service: Md5Service,
+    private usersService: UsersService,
   ) {}
 
   getTermsByUserId(id: number): Promise<UserTerm[]> {
     return this.userTermsRepository.find({
       where: {
-        id,
+        user_id: id,
       },
       select: ['id', 'title', 'created_at'],
     });
@@ -41,7 +43,12 @@ export class UserTermsService {
     userTerm.user_id = userId;
     userTerm.title = title;
 
-    await this.userTermsRepository.save(userTerm);
+    try {
+      await this.userTermsRepository.save(userTerm);
+      await this.usersService.updateUserFingerPrint(userId);
+    } catch (e) {
+      return { message: 'Term already exists' };
+    }
 
     return { message: 'Term created successfully' };
   }
@@ -96,5 +103,10 @@ export class UserTermsService {
       this.violatedTermService.create(userId, site, violatedTerms, fingerprint);
 
     return violatedTerms;
+  }
+
+  async rephrase(dto: CreateUserTermDto): Promise<CreateUserTermDto> {
+    const title: string = await this.openAIService.rephraseTerm(dto.title);
+    return { title };
   }
 }

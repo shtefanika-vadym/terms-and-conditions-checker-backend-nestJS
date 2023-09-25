@@ -17,7 +17,6 @@ export class SiteTermsService {
 
   async getSiteTerms(site: string): Promise<string[]> {
     const siteTerms: SiteTerm = await this.getLastSiteTerm(site);
-
     return siteTerms.terms.map(
       ({ title }: ITermsAndCondition): string => title,
     );
@@ -27,7 +26,7 @@ export class SiteTermsService {
     return this.siteTermsRepository.findOne({ where: { site } });
   }
 
-  private getLastSiteTerm(site: string): Promise<SiteTerm> {
+  getLastSiteTerm(site: string): Promise<SiteTerm> {
     return this.siteTermsRepository.findOne({
       where: {
         site,

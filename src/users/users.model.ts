@@ -22,6 +22,9 @@ export class User {
   @Column({ type: 'varchar', nullable: false })
   name: string;
 
+  @Column({ type: 'varchar', nullable: true })
+  fingerprint: string;
+
   @OneToMany(() => UserTerm, (userTerm: UserTerm) => userTerm.user)
   terms: UserTerm[];
 

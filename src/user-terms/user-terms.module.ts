@@ -11,6 +11,8 @@ import { HttpModule } from '@nestjs/axios';
 import { SiteTermsService } from 'src/site-terms/site-terms.service';
 import { SiteTerm } from 'src/site-terms/site-terms.model';
 import { Md5Service } from 'src/md5/md5.service';
+import { ViolatedTerm } from 'src/violated-terms/violated-terms.model';
+import { ViolatedTermsService } from 'src/violated-terms/violated-terms.service';
 
 @Module({
   controllers: [UserTermsController],
@@ -19,11 +21,12 @@ import { Md5Service } from 'src/md5/md5.service';
     PuppeteerService,
     GoogleService,
     OpenAIService,
+    ViolatedTermsService,
     SiteTermsService,
     Md5Service,
   ],
   imports: [
-    TypeOrmModule.forFeature([UserTerm, SiteTerm]),
+    TypeOrmModule.forFeature([UserTerm, SiteTerm, ViolatedTerm]),
     forwardRef(() => AuthModule),
     HttpModule,
   ],

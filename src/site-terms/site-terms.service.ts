@@ -16,13 +16,31 @@ export class SiteTermsService {
   ) {}
 
   async getSiteTerms(site: string): Promise<string[]> {
-    const siteTerms: SiteTerm[] = await this.siteTermsRepository.find({
+    const siteTerms: SiteTerm = await this.getLastSiteTerm(site);
+
+    return siteTerms.terms.map(
+      ({ title }: ITermsAndCondition): string => title,
+    );
+  }
+
+  getSiteTerm(site: string): Promise<SiteTerm> {
+    return this.siteTermsRepository.findOne({ where: { site } });
+  }
+
+  private getLastSiteTerm(site: string): Promise<SiteTerm> {
+    return this.siteTermsRepository.findOne({
       where: {
         site,
       },
+      order: {
+        id: 'DESC',
+      },
     });
+  }
 
-    return ['siteTerms.map(({ title }: SiteTerm) => title);'];
+  async getLastSiteFingerprint(site: string): Promise<string | null> {
+    const siteTerm: SiteTerm = await this.getLastSiteTerm(site);
+    return siteTerm?.fingerprint;
   }
 
   private async assignRankToTerms(terms: string[]): Promise<any> {
@@ -53,16 +71,12 @@ export class SiteTermsService {
       },
     });
 
-    if (!siteTerm) {
-      const newSiteTerm: SiteTerm = new SiteTerm();
-      newSiteTerm.site = site;
-      newSiteTerm.terms = updatedTerms;
-      newSiteTerm.fingerprint = fingerprint;
-      this.siteTermsRepository.save(newSiteTerm);
-    } else {
-      siteTerm.fingerprint = fingerprint;
-      siteTerm.terms = updatedTerms;
-      this.siteTermsRepository.save(siteTerm);
-    }
+    if (siteTerm?.fingerprint === fingerprint) return;
+
+    const newSiteTerm: SiteTerm = new SiteTerm();
+    newSiteTerm.site = site;
+    newSiteTerm.terms = updatedTerms;
+    newSiteTerm.fingerprint = fingerprint;
+    await this.siteTermsRepository.save(newSiteTerm);
   }
 }

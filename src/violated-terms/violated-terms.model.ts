@@ -2,15 +2,25 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  JoinColumn,
+  ManyToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
-import { ITermsAndCondition } from 'src/site-terms/interfaces/terms-and-condition.interface';
+import { User } from 'src/users/users.model';
+import { UserTerm } from 'src/user-terms/user-terms.model';
 
-@Entity({ name: 'site_terms' })
-export class SiteTerm {
+@Entity({ name: 'violated_terms' })
+export class ViolatedTerm {
   @PrimaryGeneratedColumn()
   id: number;
+
+  @Column({ type: 'integer', nullable: false })
+  user_id: number;
+
+  @ManyToOne(() => User, (user: User) => user)
+  @JoinColumn({ name: 'user_id' })
+  user: User;
 
   @Column({ type: 'varchar', length: 255, nullable: false })
   site: string;
@@ -19,7 +29,7 @@ export class SiteTerm {
   fingerprint: string;
 
   @Column({ type: 'json', nullable: true })
-  terms: ITermsAndCondition[];
+  terms: UserTerm[];
 
   @CreateDateColumn({
     type: 'timestamp',

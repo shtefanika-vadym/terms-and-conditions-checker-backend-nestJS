@@ -17,8 +17,11 @@ export class UserTerm {
   @Column({ type: 'varchar', length: 255, nullable: false })
   title: string;
 
+  @Column({ type: 'integer', nullable: false })
+  user_id: number;
+
   @ManyToOne(() => User, (user: User) => user)
-  @JoinColumn({ name: 'id' })
+  @JoinColumn({ name: 'user_id' })
   user: User;
 
   @CreateDateColumn({

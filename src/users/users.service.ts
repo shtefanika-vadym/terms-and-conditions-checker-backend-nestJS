@@ -37,11 +37,16 @@ export class UsersService {
     return newUser;
   }
 
-  async updateUserFingerPrint(userId: number): Promise<void> {
+  async updateUserFingerprint(userId: number): Promise<void> {
     const user: User = await this.getUserById(userId);
     const fingerprint: string = this.md5Service.calculateMd5Hash(user.terms);
     await this.userRepository.update(userId, {
       fingerprint,
     });
+  }
+
+  async getUserFingerprint(userId: number): Promise<string> {
+    const user: User = await this.getUserById(userId);
+    return user.fingerprint;
   }
 }

@@ -23,10 +23,13 @@ export class ViolatedTerm {
   user: User;
 
   @Column({ type: 'varchar', length: 255, nullable: false })
+  user_fingerprint: string;
+
+  @Column({ type: 'varchar', length: 255, nullable: false })
   site: string;
 
   @Column({ type: 'varchar', length: 255, nullable: false })
-  fingerprint: string;
+  site_fingerprint: string;
 
   @Column({ type: 'json', nullable: true })
   terms: UserTerm[];

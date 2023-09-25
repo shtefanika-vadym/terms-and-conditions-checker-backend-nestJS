@@ -8,17 +8,20 @@ import { Md5Service } from 'src/md5/md5.service';
 import { OpenAIService } from 'src/openai/openai.service';
 import { SiteTermsService } from 'src/site-terms/site-terms.service';
 import { SiteTerm } from 'src/site-terms/site-terms.model';
+import { User } from 'src/users/users.model';
+import { UsersService } from 'src/users/users.service';
 
 @Module({
   controllers: [ViolatedTermsController],
   providers: [
     ViolatedTermsService,
     Md5Service,
+    UsersService,
     OpenAIService,
     SiteTermsService,
   ],
   imports: [
-    TypeOrmModule.forFeature([ViolatedTerm, SiteTerm]),
+    TypeOrmModule.forFeature([User, ViolatedTerm, SiteTerm]),
     forwardRef(() => AuthModule),
   ],
 })

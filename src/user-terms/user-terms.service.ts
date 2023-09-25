@@ -11,6 +11,7 @@ import { SiteTermsService } from 'src/site-terms/site-terms.service';
 import { ViolatedTermsService } from 'src/violated-terms/violated-terms.service';
 import { Md5Service } from 'src/md5/md5.service';
 import { UsersService } from 'src/users/users.service';
+import { ViolatedTerm } from 'src/violated-terms/violated-terms.model';
 
 @Injectable()
 export class UserTermsService {
@@ -35,6 +36,18 @@ export class UserTermsService {
     });
   }
 
+  private async fetchTermsPageContent(site: string): Promise<string> {
+    const termsPage: string =
+      await this.googleService.getTermsAndConditionPage(site);
+    console.log(site, '=>', termsPage);
+    // const terms: string = await this.openAIService.loadText('output.txt');
+    const termsPageContent: string =
+      await this.puppeteerService.getPageContent(termsPage);
+    console.log('End extract');
+
+    return termsPageContent;
+  }
+
   async createUserTerm(
     userId: number,
     { title }: CreateUserTermDto,
@@ -45,7 +58,7 @@ export class UserTermsService {
 
     try {
       await this.userTermsRepository.save(userTerm);
-      await this.usersService.updateUserFingerPrint(userId);
+      await this.usersService.updateUserFingerprint(userId);
     } catch (e) {
       return { message: 'Term already exists' };
     }
@@ -53,54 +66,83 @@ export class UserTermsService {
     return { message: 'Term created successfully' };
   }
 
-  private async getSiteTerms(
+  private async manageLastFingerprint(
+    userId: number,
     site: string,
-  ): Promise<{ terms: string[]; fingerprint: string }> {
-    const termsPage: string =
-      await this.googleService.getTermsAndConditionPage(site);
-    console.log(site, '=>', termsPage);
-    // const terms: string = await this.openAIService.loadText('output.txt');
-    const termsPageContent: string =
-      await this.puppeteerService.getPageContent(termsPage);
-    console.log('End extract');
+    pageContent: string,
+  ): Promise<{
+    isSame: boolean;
+    newFingerprint: string;
+    lastFingerprint: string;
+  }> {
+    const userFingerprint: string =
+      await this.usersService.getUserFingerprint(userId);
 
-    const lastFingerprint: string | null =
-      await this.siteTermsService.getLastSiteFingerprint(site);
+    const lastViolatedTerm: ViolatedTerm =
+      await this.violatedTermService.getLastViolatedTerm(site);
+
     const newFingerprint: string =
-      this.md5Service.calculateMd5Hash(termsPageContent);
+      this.md5Service.calculateMd5Hash(pageContent);
 
-    if (lastFingerprint === newFingerprint) {
+    const isSame: boolean =
+      lastViolatedTerm.site_fingerprint === newFingerprint &&
+      userFingerprint === lastViolatedTerm.user_fingerprint;
+
+    return {
+      isSame,
+      newFingerprint,
+      lastFingerprint: lastViolatedTerm.site_fingerprint,
+    };
+  }
+
+  private getChunksAndSplitTerms(content: string): Promise<string[]> {
+    const chunks: string[] = this.openAIService.splitIntoChunks(content);
+    console.log('Total chunks: ', chunks.length);
+
+    return this.openAIService.listPointsByChunks(chunks);
+  }
+
+  private async getSiteTerms(
+    userId: number,
+    site: string,
+  ): Promise<{ terms: string[]; siteFingerprint: string }> {
+    const termsPageContent: string = await this.fetchTermsPageContent(site);
+
+    const { isSame, lastFingerprint, newFingerprint } =
+      await this.manageLastFingerprint(userId, site, termsPageContent);
+
+    if (isSame) {
       const terms: string[] = await this.siteTermsService.getSiteTerms(site);
       console.log('Fingerprint is the same');
       return {
         terms,
-        fingerprint: lastFingerprint,
+        siteFingerprint: lastFingerprint,
       };
     }
 
-    const chunks: string[] =
-      this.openAIService.splitIntoChunks(termsPageContent);
-    console.log('Total chunks: ', chunks.length);
-
-    const terms: string[] = await this.openAIService.listPointsByChunks(chunks);
+    const terms: string[] = await this.getChunksAndSplitTerms(termsPageContent);
 
     await this.siteTermsService.updateSiteTerms(site, terms, termsPageContent);
 
-    return { terms, fingerprint: newFingerprint };
+    return { terms, siteFingerprint: newFingerprint };
   }
 
   async identifyViolatedTerms(
     userId: number,
     site: string,
   ): Promise<UserTerm[]> {
-    const { terms, fingerprint } = await this.getSiteTerms(site);
+    const { terms, siteFingerprint } = await this.getSiteTerms(userId, site);
     const userTerms: UserTerm[] = await this.getTermsByUserId(userId);
 
     const violatedTerms: UserTerm[] =
       await this.openAIService.getUserViolatedTerms(terms, userTerms);
 
-    if (!!violatedTerms.length)
-      this.violatedTermService.create(userId, site, violatedTerms, fingerprint);
+    this.violatedTermService.create({
+      userId,
+      site,
+      siteFingerprint,
+      terms: violatedTerms,
+    });
 
     return violatedTerms;
   }

@@ -102,7 +102,7 @@ export class UserTermsService {
     return this.openAIService.listPointsByChunks(chunks);
   }
 
-  private async getSiteTerms(
+  private async getSiteTermsWithFingerprint(
     userId: number,
     site: string,
   ): Promise<{ terms: string[]; siteFingerprint: string }> {
@@ -131,7 +131,10 @@ export class UserTermsService {
     userId: number,
     site: string,
   ): Promise<UserTerm[]> {
-    const { terms, siteFingerprint } = await this.getSiteTerms(userId, site);
+    const { terms, siteFingerprint } = await this.getSiteTermsWithFingerprint(
+      userId,
+      site,
+    );
     const userTerms: UserTerm[] = await this.getTermsByUserId(userId);
 
     const violatedTerms: UserTerm[] =

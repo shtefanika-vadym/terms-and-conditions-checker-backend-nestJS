@@ -5,6 +5,7 @@ import { UserId } from 'src/auth/user-id.decorator';
 import { UserTerm } from 'src/user-terms/user-terms.model';
 import { MessageResponse } from 'src/response/message-response';
 import { CreateUserTermDto } from 'src/user-terms/dto/create-user-term.dto';
+import { IdentifyViolatedTermsDto } from 'src/user-terms/dto/identify-violated-terms.dto';
 
 @UseGuards(JwtAuthGuard)
 @Controller('user-terms')
@@ -22,5 +23,13 @@ export class UserTermsController {
     @Body() termDto: CreateUserTermDto,
   ): Promise<MessageResponse> {
     return this.userTermsService.createUserTerm(userId, termDto);
+  }
+
+  @Post('/identify-violated')
+  async identifyViolatedTerms(
+    @UserId() userId: number,
+    @Body() { site }: IdentifyViolatedTermsDto,
+  ): Promise<any> {
+    return this.userTermsService.identifyViolatedTerms(userId, site);
   }
 }

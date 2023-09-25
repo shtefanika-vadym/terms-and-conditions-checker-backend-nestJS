@@ -5,20 +5,21 @@ import {
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
+import { ITermsAndCondition } from 'src/site-terms/interfaces/terms-and-condition.interface';
 
 @Entity({ name: 'site_terms' })
-export class SiteTerms {
+export class SiteTerm {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({ type: 'varchar', length: 255, nullable: false })
+  @Column({ type: 'varchar', length: 255, nullable: false, unique: true })
   site: string;
 
   @Column({ type: 'varchar', length: 255, nullable: false })
-  title: string;
+  fingerprint: string;
 
-  @Column({ type: 'integer', nullable: false })
-  ranking: number;
+  @Column({ type: 'json', nullable: true })
+  terms: ITermsAndCondition[];
 
   @CreateDateColumn({
     type: 'timestamp',

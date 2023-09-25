@@ -3,6 +3,8 @@ import * as fs from 'fs-extra';
 import OpenAI from 'openai';
 import GPT3Tokenizer from 'gpt3-tokenizer';
 import * as process from 'process';
+import { UserTerm } from 'src/user-terms/user-terms.model';
+import { SiteTerm } from 'src/site-terms/site-terms.model';
 
 @Injectable()
 export class OpenAIService {
@@ -25,11 +27,11 @@ export class OpenAIService {
     return fileContent;
   }
 
-  getMaxTokensForSummary(chunksLength: number): number {
+  private getMaxTokensForSummary(chunksLength: number): number {
     return Math.floor(this.MAX_TOKENS / chunksLength);
   }
 
-  async keyPointsExtraction(
+  private async keyPointsExtraction(
     text: string,
     maxSummaryTokens: number,
   ): Promise<string> {
@@ -43,16 +45,18 @@ export class OpenAIService {
           },
           {
             role: 'user',
-            content: text,
+            content:
+              text +
+              'Response should be an array of strings. Without any additional text.',
           },
         ],
       });
     return response.choices.at(0).message.content.trim();
   }
 
-  async getUserViolatedTerms(
+  private async violatedTerms(
     terms: string[],
-    userTerms: any[],
+    userTerms: UserTerm[],
   ): Promise<number[]> {
     const siteTermsProp: string = `Site Terms: ${terms.join('\n')}`;
     const userTermsProp: string = `User terms: + ${JSON.stringify(userTerms)}`;
@@ -82,23 +86,31 @@ export class OpenAIService {
         );
       }),
     );
-    return keyPoints;
+    return keyPoints
+      .map((keyPoint: string): string[] => keyPoint.split('\n'))
+      .flat()
+      .map((keyPoint: string): string => keyPoint.replace('- ', '').trim());
   }
 
-  async saveToFile(response: string[]): Promise<void> {
+  private async saveToFile(response: string[]): Promise<void> {
     await fs.writeFile('output.txt', response.join('\n'));
   }
 
-  async callOpenAIApi(siteTerms: string, userTerms: any[]): Promise<number[]> {
-    // const terms: string = await this.loadText('output.txt');
-
-    const chunks: string[] = this.splitIntoChunks(siteTerms);
-    const termsKeyPoints: string[] = await this.listPointsByChunks(chunks);
-    const violatedTermsIds: number[] = await this.getUserViolatedTerms(
-      termsKeyPoints,
+  async getUserViolatedTerms(
+    terms: string[],
+    userTerms: UserTerm[],
+  ): Promise<UserTerm[]> {
+    const violatedTermsIds: number[] = await this.violatedTerms(
+      terms,
       userTerms,
     );
-    return violatedTermsIds;
+    return this.mapIdsToTerms(violatedTermsIds, userTerms);
+  }
+
+  private mapIdsToTerms(ids: number[], userTerms: UserTerm[]): UserTerm[] {
+    return ids.map((id: number): UserTerm => {
+      return userTerms.find((term: UserTerm): boolean => term.id === id);
+    });
   }
 
   splitIntoChunks(content: string): string[] {
@@ -112,5 +124,19 @@ export class OpenAIService {
     }
 
     return result;
+  }
+
+  async getRankingForTerm(term: string): Promise<number> {
+    const response: OpenAI.Chat.ChatCompletion =
+      await this.openai.chat.completions.create({
+        model: process.env.OPENAI_VIOLAIONS_MODEL,
+        messages: [
+          {
+            role: 'user',
+            content: term + process.env.OPENAI_RANKING_RESPONSE,
+          },
+        ],
+      });
+    return +response.choices.at(0).message.content;
   }
 }

@@ -14,7 +14,7 @@ import { ContactUsModule } from 'src/contact-us/contact-us.module';
 import { SiteTermsModule } from './site-terms/site-terms.module';
 import { UserTermsModule } from './user-terms/user-terms.module';
 import { UserTerm } from 'src/user-terms/user-terms.model';
-import { SiteTerms } from 'src/site-terms/site-terms.model';
+import { SiteTerm } from 'src/site-terms/site-terms.model';
 
 @Module({
   imports: [
@@ -30,7 +30,7 @@ import { SiteTerms } from 'src/site-terms/site-terms.model';
       database: process.env.POSTGRES_DB,
       username: process.env.POSTGRES_USER,
       password: process.env.POSTGRESS_PASSWORD,
-      entities: [User, ContactUs, UserTerm, SiteTerms],
+      entities: [User, ContactUs, UserTerm, SiteTerm],
     }),
     AuthModule,
     UsersModule,

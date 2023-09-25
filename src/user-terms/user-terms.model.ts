@@ -1,24 +1,25 @@
 import {
-  Entity,
-  PrimaryGeneratedColumn,
   Column,
   CreateDateColumn,
+  Entity,
+  JoinColumn,
+  ManyToOne,
+  PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
+import { User } from 'src/users/users.model';
 
-@Entity({ name: 'contact_us' })
-export class ContactUs {
+@Entity({ name: 'user_terms' })
+export class UserTerm {
   @PrimaryGeneratedColumn()
   id: number;
 
   @Column({ type: 'varchar', length: 255, nullable: false })
-  name: string;
+  title: string;
 
-  @Column({ type: 'varchar', length: 255, nullable: false })
-  email: string;
-
-  @Column({ type: 'text', nullable: false })
-  message: string;
+  @ManyToOne(() => User, (user: User) => user)
+  @JoinColumn({ name: 'id' })
+  user: User;
 
   @CreateDateColumn({
     type: 'timestamp',

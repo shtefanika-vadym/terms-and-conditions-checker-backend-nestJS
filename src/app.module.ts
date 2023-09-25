@@ -11,6 +11,10 @@ import { AuthModule } from 'src/auth/auth.module';
 import { User } from 'src/users/users.model';
 import { ContactUs } from 'src/contact-us/contact-us.model';
 import { ContactUsModule } from 'src/contact-us/contact-us.module';
+import { SiteTermsModule } from './site-terms/site-terms.module';
+import { UserTermsModule } from './user-terms/user-terms.module';
+import { UserTerm } from 'src/user-terms/user-terms.model';
+import { SiteTerms } from 'src/site-terms/site-terms.model';
 
 @Module({
   imports: [
@@ -26,11 +30,13 @@ import { ContactUsModule } from 'src/contact-us/contact-us.module';
       database: process.env.POSTGRES_DB,
       username: process.env.POSTGRES_USER,
       password: process.env.POSTGRESS_PASSWORD,
-      entities: [User, ContactUs],
+      entities: [User, ContactUs, UserTerm, SiteTerms],
     }),
     AuthModule,
     UsersModule,
     ContactUsModule,
+    SiteTermsModule,
+    UserTermsModule,
   ],
   controllers: [AppController],
   providers: [PuppeteerService, OpenAIService, GoogleService],

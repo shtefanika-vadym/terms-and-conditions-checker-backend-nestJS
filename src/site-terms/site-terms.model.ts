@@ -1,24 +1,24 @@
 import {
-  Entity,
-  PrimaryGeneratedColumn,
   Column,
   CreateDateColumn,
+  Entity,
+  PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
 
-@Entity({ name: 'contact_us' })
-export class ContactUs {
+@Entity({ name: 'site_terms' })
+export class SiteTerms {
   @PrimaryGeneratedColumn()
   id: number;
 
   @Column({ type: 'varchar', length: 255, nullable: false })
-  name: string;
+  site: string;
 
   @Column({ type: 'varchar', length: 255, nullable: false })
-  email: string;
+  title: string;
 
-  @Column({ type: 'text', nullable: false })
-  message: string;
+  @Column({ type: 'integer', nullable: false })
+  ranking: number;
 
   @CreateDateColumn({
     type: 'timestamp',

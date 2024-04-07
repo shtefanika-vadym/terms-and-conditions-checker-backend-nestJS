@@ -1,10 +1,9 @@
-import { Injectable } from '@nestjs/common';
-import * as fs from 'fs-extra';
-import OpenAI from 'openai';
-import GPT3Tokenizer from 'gpt3-tokenizer';
-import * as process from 'process';
-import { UserTerm } from 'src/user-terms/user-terms.model';
-import { SiteTerm } from 'src/site-terms/site-terms.model';
+import { Injectable } from "@nestjs/common";
+import * as fs from "fs-extra";
+import OpenAI from "openai";
+import GPT3Tokenizer from "gpt3-tokenizer";
+import * as process from "process";
+import { UserTerm } from "src/user-terms/user-terms.model";
 
 @Injectable()
 export class OpenAIService {
@@ -23,8 +22,7 @@ export class OpenAIService {
   constructor() {}
 
   async loadText(file_path: string): Promise<string> {
-    const fileContent = await fs.readFile(file_path, 'utf-8');
-    return fileContent;
+    return await fs.readFile(file_path, 'utf-8');
   }
 
   private getMaxTokensForSummary(chunksLength: number): number {

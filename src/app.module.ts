@@ -9,8 +9,6 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { UsersModule } from 'src/users/users.module';
 import { AuthModule } from 'src/auth/auth.module';
 import { User } from 'src/users/users.model';
-import { ContactUs } from 'src/contact-us/contact-us.model';
-import { ContactUsModule } from 'src/contact-us/contact-us.module';
 import { SiteTermsModule } from './site-terms/site-terms.module';
 import { UserTermsModule } from './user-terms/user-terms.module';
 import { UserTerm } from 'src/user-terms/user-terms.model';
@@ -32,11 +30,10 @@ import { ViolatedTerm } from 'src/violated-terms/violated-terms.model';
       database: process.env.POSTGRES_DB,
       username: process.env.POSTGRES_USER,
       password: process.env.POSTGRESS_PASSWORD,
-      entities: [User, ContactUs, UserTerm, SiteTerm, ViolatedTerm],
+      entities: [User, UserTerm, SiteTerm, ViolatedTerm],
     }),
     AuthModule,
     UsersModule,
-    ContactUsModule,
     SiteTermsModule,
     UserTermsModule,
     ViolatedTermsModule,

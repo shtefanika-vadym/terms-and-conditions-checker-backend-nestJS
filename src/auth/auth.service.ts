@@ -8,7 +8,7 @@ import {
 import * as bcrypt from 'bcryptjs';
 import { JwtService } from '@nestjs/jwt';
 import { LoginDto } from 'src/auth/dto/login.dto';
-import { LoginResponse } from 'src/auth/responses/login-response';
+import { LoginResponse } from 'src/auth/response/login-response';
 import { MessageResponse } from 'src/response/message-response';
 import { User } from 'src/users/users.model';
 import { UsersService } from 'src/users/users.service';
@@ -26,7 +26,7 @@ export class AuthService {
     return this.generateToken(user);
   }
 
-  async register(userDto: CreateUserDto): Promise<MessageResponse> {
+  async register(userDto: CreateUserDto): Promise<LoginResponse> {
     const candidate: User = await this.usersService.getUserByEmail(
       userDto.email,
     );
@@ -37,11 +37,11 @@ export class AuthService {
       );
 
     const hashPassword = await bcrypt.hash(userDto.password, 5);
-    await this.usersService.createUser({
+    const user: User = await this.usersService.createUser({
       ...userDto,
       password: hashPassword,
     });
-    return { message: 'User successfully registered.' };
+    return this.generateToken(user);
   }
 
   async generateToken(user: User): Promise<LoginResponse> {

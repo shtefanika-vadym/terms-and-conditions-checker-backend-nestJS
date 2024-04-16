@@ -19,9 +19,6 @@ export class User {
   @Column({ type: 'varchar', nullable: false })
   email: string;
 
-  @Column({ type: 'varchar', nullable: false })
-  name: string;
-
   @Column({ type: 'varchar', nullable: true })
   fingerprint: string;
 

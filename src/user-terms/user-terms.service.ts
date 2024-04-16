@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { UserTerm } from 'src/user-terms/user-terms.model';
@@ -12,6 +12,7 @@ import { ViolatedTermsService } from 'src/violated-terms/violated-terms.service'
 import { Md5Service } from 'src/md5/md5.service';
 import { UsersService } from 'src/users/users.service';
 import { ViolatedTerm } from 'src/violated-terms/violated-terms.model';
+import { RephraseResponse } from 'src/user-terms/response/rephrase-response';
 
 @Injectable()
 export class UserTermsService {
@@ -32,7 +33,7 @@ export class UserTermsService {
       where: {
         user_id: id,
       },
-      select: ['id', 'title', 'created_at'],
+      select: ['id', 'title'],
     });
   }
 
@@ -64,6 +65,23 @@ export class UserTermsService {
     }
 
     return { message: 'Term created successfully' };
+  }
+
+  async deleteUserTerm(userId: number, id: number): Promise<MessageResponse> {
+    const term: UserTerm = await this.userTermsRepository.findOne({
+      where: {
+        id,
+        user_id: userId,
+      },
+    });
+
+    if (!term) {
+      throw new NotFoundException('Term not found');
+    }
+
+    await this.userTermsRepository.remove(term);
+
+    return { message: 'Term deleted successfully' };
   }
 
   private async manageLastFingerprint(
@@ -150,8 +168,8 @@ export class UserTermsService {
     return violatedTerms;
   }
 
-  async rephrase(dto: CreateUserTermDto): Promise<CreateUserTermDto> {
+  async rephrase(dto: CreateUserTermDto): Promise<RephraseResponse> {
     const title: string = await this.openAIService.rephraseTerm(dto.title);
-    return { title };
+    return { title, isBlocked: title === process.env.OPENAI_NO_RULE_FOUND };
   }
 }

@@ -102,14 +102,22 @@ export class UserTermsService {
     const newFingerprint: string =
       this.md5Service.calculateMd5Hash(pageContent);
 
-    const isSame: boolean =
-      lastViolatedTerm.site_fingerprint === newFingerprint &&
-      userFingerprint === lastViolatedTerm.user_fingerprint;
+    if (lastViolatedTerm) {
+      const isSame: boolean =
+        lastViolatedTerm.site_fingerprint === newFingerprint &&
+        userFingerprint === lastViolatedTerm.user_fingerprint;
+
+      return {
+        isSame,
+        newFingerprint,
+        lastFingerprint: lastViolatedTerm.site_fingerprint,
+      };
+    }
 
     return {
-      isSame,
+      isSame: false,
       newFingerprint,
-      lastFingerprint: lastViolatedTerm.site_fingerprint,
+      lastFingerprint: null,
     };
   }
 

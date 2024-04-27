@@ -1,4 +1,4 @@
-import { Controller, Get, Param, Query } from "@nestjs/common";
+import { Controller, Get, Query } from '@nestjs/common';
 import { SiteTermsService } from 'src/site-terms/site-terms.service';
 import { SiteTerm } from 'src/site-terms/site-terms.model';
 import { ITermsAndCondition } from 'src/site-terms/interfaces/terms-and-condition.interface';
@@ -9,10 +9,9 @@ export class SiteTermsController {
 
   @Get()
   async getSiteTerms(
-    @Query('site') site: string,
+    @Query('site') url: string,
   ): Promise<ITermsAndCondition[]> {
-    const siteTerm: SiteTerm =
-      await this.siteTermsService.getLastSiteTerm(site);
+    const siteTerm: SiteTerm = await this.siteTermsService.getLastSiteTerm(url);
     return siteTerm?.terms || [];
   }
 }

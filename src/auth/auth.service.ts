@@ -9,7 +9,6 @@ import * as bcrypt from 'bcryptjs';
 import { JwtService } from '@nestjs/jwt';
 import { LoginDto } from 'src/auth/dto/login.dto';
 import { LoginResponse } from 'src/auth/response/login-response';
-import { MessageResponse } from 'src/response/message-response';
 import { User } from 'src/users/users.model';
 import { UsersService } from 'src/users/users.service';
 import { CreateUserDto } from 'src/users/dto/create-user.dto';
@@ -41,6 +40,7 @@ export class AuthService {
       ...userDto,
       password: hashPassword,
     });
+    this.usersService.updateUserFingerprint(user.id);
     return this.generateToken(user);
   }
 

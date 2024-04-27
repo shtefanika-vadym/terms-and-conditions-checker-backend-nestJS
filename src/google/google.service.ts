@@ -21,7 +21,7 @@ export class GoogleService {
     );
     return items.at(0).link;
   }
-  async getTermsAndConditionPage(site: string): Promise<string> {
+  async getPageTermsAndConditions(site: string): Promise<string> {
     return this.getFirstPageUrlByQuery(`${site} terms and conditions`);
   }
 }

@@ -15,21 +15,23 @@ export class SiteTermsService {
     private openAIService: OpenAIService,
   ) {}
 
-  async getSiteTerms(site: string): Promise<string[]> {
-    const siteTerms: SiteTerm = await this.getLastSiteTerm(site);
-    return siteTerms.terms.map(
+  async getSiteTerms(url: string): Promise<{ id: number; terms: string[] }> {
+    const site: SiteTerm = await this.getLastSiteTerm(url);
+    console.log(site);
+    const terms = site.terms.map(
       ({ title }: ITermsAndCondition): string => title,
     );
+    return { terms, id: site.id };
   }
 
-  getSiteTerm(site: string): Promise<SiteTerm> {
-    return this.siteTermsRepository.findOne({ where: { site } });
+  getSiteTerm(url: string): Promise<SiteTerm> {
+    return this.siteTermsRepository.findOne({ where: { site_url: url } });
   }
 
-  getLastSiteTerm(site: string): Promise<SiteTerm> {
+  getLastSiteTerm(url: string): Promise<SiteTerm> {
     return this.siteTermsRepository.findOne({
       where: {
-        site,
+        site_url: url,
       },
       order: {
         id: 'DESC',
@@ -45,37 +47,47 @@ export class SiteTermsService {
   private async assignRankToTerms(terms: string[]): Promise<any> {
     return Promise.all(
       terms.map(async (title: string): Promise<any> => {
-        const ranking: number = 0;
+        const rank: number = 0;
         // const ranking: number = await this.openAIService.getRankingForTerm(term);
         return {
+          rank,
           title,
-          ranking,
         };
       }),
     );
   }
 
-  async updateSiteTerms(
-    site: string,
-    newTerms: string[],
-    pageContent: string,
-  ): Promise<void> {
+  async updateSiteTerms({
+    url,
+    termsUrl,
+    newTerms,
+    pageContent,
+  }): Promise<SiteTerm> {
     const fingerprint: string = this.md5Service.calculateMd5Hash(pageContent);
     const updatedTerms: ITermsAndCondition[] =
       await this.assignRankToTerms(newTerms);
 
     const siteTerm: SiteTerm = await this.siteTermsRepository.findOne({
       where: {
-        site,
+        site_url: url,
       },
     });
 
-    if (siteTerm?.fingerprint === fingerprint) return;
+    if (!siteTerm) {
+      const newSiteTerm: SiteTerm = new SiteTerm();
+      newSiteTerm.site_url = url;
+      newSiteTerm.terms_url = termsUrl;
+      newSiteTerm.terms = updatedTerms;
+      newSiteTerm.fingerprint = fingerprint;
+      await this.siteTermsRepository.save(newSiteTerm);
+      return newSiteTerm;
+    }
 
-    const newSiteTerm: SiteTerm = new SiteTerm();
-    newSiteTerm.site = site;
-    newSiteTerm.terms = updatedTerms;
-    newSiteTerm.fingerprint = fingerprint;
-    await this.siteTermsRepository.save(newSiteTerm);
+    if (siteTerm.fingerprint === fingerprint) return siteTerm;
+
+    siteTerm.terms = updatedTerms;
+    siteTerm.fingerprint = fingerprint;
+    await this.siteTermsRepository.save(siteTerm);
+    return siteTerm;
   }
 }

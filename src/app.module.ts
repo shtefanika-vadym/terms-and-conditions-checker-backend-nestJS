@@ -15,6 +15,8 @@ import { UserTerm } from 'src/user-terms/user-terms.model';
 import { SiteTerm } from 'src/site-terms/site-terms.model';
 import { ViolatedTermsModule } from './violated-terms/violated-terms.module';
 import { ViolatedTerm } from 'src/violated-terms/violated-terms.model';
+import { UserHistoryModule } from './user-history/user-history.module';
+import { UserHistory } from 'src/user-history/user-history.model';
 
 @Module({
   imports: [
@@ -30,13 +32,14 @@ import { ViolatedTerm } from 'src/violated-terms/violated-terms.model';
       database: process.env.POSTGRES_DB,
       username: process.env.POSTGRES_USER,
       password: process.env.POSTGRESS_PASSWORD,
-      entities: [User, UserTerm, SiteTerm, ViolatedTerm],
+      entities: [User, UserTerm, SiteTerm, ViolatedTerm, UserHistory],
     }),
     AuthModule,
     UsersModule,
     SiteTermsModule,
     UserTermsModule,
     ViolatedTermsModule,
+    UserHistoryModule,
   ],
   controllers: [AppController],
   providers: [PuppeteerService, OpenAIService, GoogleService],

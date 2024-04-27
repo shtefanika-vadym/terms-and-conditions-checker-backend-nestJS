@@ -42,11 +42,11 @@ export class UserTermsController {
   }
 
   @Get('/identify-violated')
-  async identifyViolatedTerms(
+  async checkForTermsViolations(
     @UserId() userId: number,
     @Query('site') site: string,
   ): Promise<UserTerm[]> {
-    return this.userTermsService.identifyViolatedTerms(userId, site);
+    return this.userTermsService.checkForTermsViolations(userId, site);
   }
 
   @Post('/rephrase')

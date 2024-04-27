@@ -26,7 +26,7 @@ export class ViolatedTerm {
   user_fingerprint: string;
 
   @Column({ type: 'varchar', length: 255, nullable: false })
-  site: string;
+  site_url: string;
 
   @Column({ type: 'varchar', length: 255, nullable: false })
   site_fingerprint: string;

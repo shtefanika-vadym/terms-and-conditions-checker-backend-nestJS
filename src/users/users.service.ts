@@ -13,28 +13,24 @@ export class UsersService {
   ) {}
 
   async getAllUsers(): Promise<User[]> {
-    const users: User[] = await this.userRepository.find();
-    return users;
+    return await this.userRepository.find();
   }
 
   async getUserByEmail(email: string): Promise<User> {
-    const user: User = await this.userRepository.findOne({
+    return await this.userRepository.findOne({
       where: { email },
     });
-    return user;
   }
 
   async getUserById(id: number): Promise<User> {
-    const user: User = await this.userRepository.findOne({
+    return await this.userRepository.findOne({
       where: { id },
       relations: ['terms'],
     });
-    return user;
   }
 
   async createUser(user: CreateUserDto): Promise<User> {
-    const newUser: User = await this.userRepository.save(user);
-    return newUser;
+    return await this.userRepository.save(user);
   }
 
   async updateUserFingerprint(userId: number): Promise<void> {

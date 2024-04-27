@@ -5,7 +5,9 @@ import { Injectable } from '@nestjs/common';
 export class PuppeteerService {
   async getPageContent(url: string): Promise<string> {
     let result: string;
-    const browser: puppeteer.Browser = await puppeteer.launch({});
+    const browser: puppeteer.Browser = await puppeteer.launch({
+      headless: 'new',
+    });
     const page: puppeteer.Page = await browser.newPage();
 
     await page.goto(url);

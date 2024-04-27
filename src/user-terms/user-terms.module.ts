@@ -15,6 +15,8 @@ import { ViolatedTerm } from 'src/violated-terms/violated-terms.model';
 import { ViolatedTermsService } from 'src/violated-terms/violated-terms.service';
 import { User } from 'src/users/users.model';
 import { UsersService } from 'src/users/users.service';
+import { UserHistory } from 'src/user-history/user-history.model';
+import { UserHistoryService } from 'src/user-history/user-history.service';
 
 @Module({
   controllers: [UserTermsController],
@@ -27,9 +29,16 @@ import { UsersService } from 'src/users/users.service';
     SiteTermsService,
     Md5Service,
     UsersService,
+    UserHistoryService,
   ],
   imports: [
-    TypeOrmModule.forFeature([User, UserTerm, SiteTerm, ViolatedTerm]),
+    TypeOrmModule.forFeature([
+      User,
+      UserTerm,
+      SiteTerm,
+      ViolatedTerm,
+      UserHistory,
+    ]),
     forwardRef(() => AuthModule),
     HttpModule,
   ],

@@ -16,16 +16,16 @@ export class ViolatedTermsService {
   ) {}
 
   async create({
-    userId,
-    site,
+    url,
     terms,
+    userId,
     siteFingerprint,
   }: ICreateViolatedTerm): Promise<void> {
     const userFingerprint: string =
       await this.userService.getUserFingerprint(userId);
     const term: ViolatedTerm = new ViolatedTerm();
     term.user_id = userId;
-    term.site = site;
+    term.site_url = url;
     term.terms = terms;
     term.user_fingerprint = userFingerprint;
     term.site_fingerprint = siteFingerprint;
@@ -33,10 +33,10 @@ export class ViolatedTermsService {
     this.violatedTermRepository.save(term);
   }
 
-  async getLastViolatedTerm(site: string): Promise<ViolatedTerm> {
+  async getLastViolatedTerm(url: string): Promise<ViolatedTerm> {
     return this.violatedTermRepository.findOne({
       where: {
-        site,
+        site_url: url,
       },
       order: {
         id: 'DESC',

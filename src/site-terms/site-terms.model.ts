@@ -13,7 +13,10 @@ export class SiteTerm {
   id: number;
 
   @Column({ type: 'varchar', length: 255, nullable: false })
-  site: string;
+  site_url: string;
+
+  @Column({ type: 'varchar', length: 255, nullable: false })
+  terms_url: string;
 
   @Column({ type: 'varchar', length: 255, nullable: false })
   fingerprint: string;

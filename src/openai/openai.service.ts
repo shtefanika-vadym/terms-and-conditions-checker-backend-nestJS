@@ -1,9 +1,9 @@
-import { Injectable } from "@nestjs/common";
-import * as fs from "fs-extra";
-import OpenAI from "openai";
-import GPT3Tokenizer from "gpt3-tokenizer";
-import * as process from "process";
-import { UserTerm } from "src/user-terms/user-terms.model";
+import { Injectable } from '@nestjs/common';
+import * as fs from 'fs-extra';
+import OpenAI from 'openai';
+import GPT3Tokenizer from 'gpt3-tokenizer';
+import * as process from 'process';
+import { UserTerm } from 'src/user-terms/user-terms.model';
 
 @Injectable()
 export class OpenAIService {
@@ -124,7 +124,7 @@ export class OpenAIService {
     return result;
   }
 
-  async getRankingForTerm(term: string): Promise<number> {
+  async getTermRank(term: string): Promise<number> {
     const response: OpenAI.Chat.ChatCompletion =
       await this.openai.chat.completions.create({
         model: process.env.OPENAI_VIOLAIONS_MODEL,

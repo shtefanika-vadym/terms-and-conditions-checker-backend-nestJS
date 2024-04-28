@@ -15,9 +15,10 @@ export class SiteTermsService {
     private openAIService: OpenAIService,
   ) {}
 
-  async getSiteTerms(url: string): Promise<{ id: number; terms: string[] }> {
-    const site: SiteTerm = await this.getLastSiteTerm(url);
-    console.log(site);
+  async getSiteTermsWithId(
+    url: string,
+  ): Promise<{ id: number; terms: string[] }> {
+    const site: SiteTerm = await this.getSiteTerm(url);
     const terms = site.terms.map(
       ({ title }: ITermsAndCondition): string => title,
     );
@@ -28,7 +29,7 @@ export class SiteTermsService {
     return this.siteTermsRepository.findOne({ where: { site_url: url } });
   }
 
-  getLastSiteTerm(url: string): Promise<SiteTerm> {
+  getSiteTerms(url: string): Promise<SiteTerm> {
     return this.siteTermsRepository.findOne({
       where: {
         site_url: url,
@@ -40,7 +41,7 @@ export class SiteTermsService {
   }
 
   async getLastSiteFingerprint(site: string): Promise<string | null> {
-    const siteTerm: SiteTerm = await this.getLastSiteTerm(site);
+    const siteTerm: SiteTerm = await this.getSiteTerm(site);
     return siteTerm?.fingerprint;
   }
 

@@ -11,7 +11,7 @@ export class SiteTermsController {
   async getSiteTerms(
     @Query('site') url: string,
   ): Promise<ITermsAndCondition[]> {
-    const siteTerm: SiteTerm = await this.siteTermsService.getLastSiteTerm(url);
+    const siteTerm: SiteTerm = await this.siteTermsService.getSiteTerm(url);
     return siteTerm?.terms || [];
   }
 }

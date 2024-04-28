@@ -49,7 +49,13 @@ export class OpenAIService {
           },
         ],
       });
-    return response.choices.at(0).message.content.trim();
+    const result: string = response.choices.at(0).message.content.trim();
+
+    if (result.includes(process.env.OPENAI_NO_TERMS_FOUND)) {
+      console.log('No terms found.');
+      throw new Error(process.env.OPENAI_NO_TERMS_FOUND);
+    }
+    return result;
   }
 
   private async violatedTerms(
@@ -76,18 +82,22 @@ export class OpenAIService {
   }
 
   async listPointsByChunks(chunks: string[]): Promise<string[]> {
-    const keyPoints: string[] = await Promise.all(
-      chunks.map(async (chunk: string): Promise<string> => {
-        return await this.keyPointsExtraction(
-          chunk,
-          this.getMaxTokensForSummary(chunks.length),
-        );
-      }),
-    );
-    return keyPoints
-      .map((keyPoint: string): string[] => keyPoint.split('\n'))
-      .flat()
-      .map((keyPoint: string): string => keyPoint.replace('- ', '').trim());
+    try {
+      const keyPoints: string[] = await Promise.all(
+        chunks.map(async (chunk: string): Promise<string> => {
+          return await this.keyPointsExtraction(
+            chunk,
+            this.getMaxTokensForSummary(chunks.length),
+          );
+        }),
+      );
+      return keyPoints
+        .map((keyPoint: string): string[] => keyPoint.split('\n'))
+        .flat()
+        .map((keyPoint: string): string => keyPoint.replace('- ', '').trim());
+    } catch (err) {
+      return [];
+    }
   }
 
   private async saveToFile(response: string[]): Promise<void> {

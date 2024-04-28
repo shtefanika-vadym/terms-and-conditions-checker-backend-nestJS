@@ -2,6 +2,7 @@ import { Repository } from 'typeorm';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { UserHistory } from 'src/user-history/user-history.model';
+import { AnalyseStatus } from 'src/user-history/enums/analyse-status';
 
 @Injectable()
 export class UserHistoryService {
@@ -14,6 +15,9 @@ export class UserHistoryService {
     return await this.userHistoryRepository.find({
       where: {
         user_id: id,
+      },
+      order: {
+        id: 'DESC',
       },
       relations: ['site'],
       select: {
@@ -35,12 +39,13 @@ export class UserHistoryService {
     await this.userHistoryRepository.save(history);
   }
 
-  async checkHasAnalysis(
+  async checkStatus(
     userId: number,
     url: string,
-  ): Promise<{ hasAnalysis: boolean }> {
+  ): Promise<{ status: AnalyseStatus }> {
     const history: UserHistory | undefined =
       await this.userHistoryRepository.findOne({
+        relations: ['site'],
         where: {
           user_id: userId,
           site: {
@@ -48,6 +53,10 @@ export class UserHistoryService {
           },
         },
       });
-    return { hasAnalysis: Boolean(history) };
+
+    if (!history) return { status: AnalyseStatus.Unchecked };
+    if (!history.site.terms.length) return { status: AnalyseStatus.Rejected };
+
+    return { status: AnalyseStatus.Analysed };
   }
 }

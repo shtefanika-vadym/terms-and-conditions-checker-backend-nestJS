@@ -3,6 +3,7 @@ import { UserId } from 'src/auth/user-id.decorator';
 import { UserHistoryService } from './user-history.service';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 import { UserHistory } from 'src/user-history/user-history.model';
+import { AnalyseStatus } from 'src/user-history/enums/analyse-status';
 
 @UseGuards(JwtAuthGuard)
 @Controller('user-history')
@@ -14,11 +15,11 @@ export class UserHistoryController {
     return this.userHistoryService.getUserHistory(userId);
   }
 
-  @Get('/has-analysis')
-  async checkHasAnalysis(
+  @Get('/status')
+  async checkStatus(
     @UserId() userId: number,
     @Query('site') site: string,
-  ): Promise<{ hasAnalysis: boolean }> {
-    return this.userHistoryService.checkHasAnalysis(userId, site);
+  ): Promise<{ status: AnalyseStatus }> {
+    return this.userHistoryService.checkStatus(userId, site);
   }
 }

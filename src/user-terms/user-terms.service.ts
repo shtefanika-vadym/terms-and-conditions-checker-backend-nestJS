@@ -141,8 +141,8 @@ export class UserTermsService {
       await this.manageLastFingerprint(userId, url, termsPageContent);
 
     if (isSame) {
-      const term = await this.siteTermsService.getSiteTerms(url);
-      console.log('Fingerprint is the same');
+      const term = await this.siteTermsService.getSiteTermsWithId(url);
+      console.log('Same fingerprint');
       return {
         ...term,
         siteFingerprint: lastFingerprint,

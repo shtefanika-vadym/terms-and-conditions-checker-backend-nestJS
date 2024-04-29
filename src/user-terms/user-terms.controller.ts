@@ -41,7 +41,7 @@ export class UserTermsController {
     return this.userTermsService.deleteUserTerm(userId, id);
   }
 
-  @Get('/identify-violated')
+  @Post('/identify-violated')
   async checkForTermsViolations(
     @UserId() userId: number,
     @Query('site') site: string,

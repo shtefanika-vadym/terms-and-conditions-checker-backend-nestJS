@@ -48,8 +48,8 @@ export class SiteTermsService {
   private async assignRankToTerms(terms: string[]): Promise<any> {
     return Promise.all(
       terms.map(async (title: string): Promise<any> => {
-        const rank: number = 0;
-        // const ranking: number = await this.openAIService.getRankingForTerm(term);
+        // const rank: number = 0;
+        const rank: number = await this.openAIService.getTermRank(title);
         return {
           rank,
           title,

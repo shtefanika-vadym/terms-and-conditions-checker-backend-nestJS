@@ -20,7 +20,7 @@ export class ViolatedTermsService {
     terms,
     userId,
     siteFingerprint,
-  }: ICreateViolatedTerm): Promise<void> {
+  }: ICreateViolatedTerm): Promise<ViolatedTerm> {
     const userFingerprint: string =
       await this.userService.getUserFingerprint(userId);
     const term: ViolatedTerm = new ViolatedTerm();
@@ -30,7 +30,7 @@ export class ViolatedTermsService {
     term.user_fingerprint = userFingerprint;
     term.site_fingerprint = siteFingerprint;
 
-    this.violatedTermRepository.save(term);
+    return this.violatedTermRepository.save(term);
   }
 
   async getLastViolatedTerm(url: string): Promise<ViolatedTerm> {

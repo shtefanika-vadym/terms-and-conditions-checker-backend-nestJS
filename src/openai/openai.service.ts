@@ -4,22 +4,27 @@ import OpenAI from 'openai';
 import GPT3Tokenizer from 'gpt3-tokenizer';
 import * as process from 'process';
 import { UserTerm } from 'src/user-terms/user-terms.model';
+import { ConfigService } from '@nestjs/config';
+import { PromptService } from 'src/prompt/prompt.service';
+import { ChatCompletionMessageParam } from 'openai/src/resources/chat/completions';
+import { RephraseResponse } from 'src/user-terms/response/rephrase-response';
 
 @Injectable()
 export class OpenAIService {
-  private readonly MAX_TOKENS: number =
-    +process.env.OPENAI_KEY_POINTS_MAX_TOKENS;
-  private readonly openai: OpenAI = new OpenAI({
-    apiKey: process.env.OPENAI_KEY,
-  });
+  private readonly openai: OpenAI;
+  private readonly MAX_TOKENS: number;
+  private readonly tokenizer: GPT3Tokenizer;
 
-  private readonly USER_TS = [{ id: 1, title: 'Accept users under 13 years' }];
-
-  private readonly tokenizer: GPT3Tokenizer = new GPT3Tokenizer({
-    type: 'gpt3',
-  });
-
-  constructor() {}
+  constructor(
+    private readonly configService: ConfigService,
+    private readonly promptService: PromptService,
+  ) {
+    this.MAX_TOKENS = +this.configService.get<string>('OPENAI_MAX_TOKENS');
+    this.openai = new OpenAI({
+      apiKey: this.configService.get<string>('OPENAI_KEY'),
+    });
+    this.tokenizer = new GPT3Tokenizer({ type: 'gpt3' });
+  }
 
   async loadText(file_path: string): Promise<string> {
     return await fs.readFile(file_path, 'utf-8');
@@ -27,6 +32,18 @@ export class OpenAIService {
 
   private getMaxTokensForSummary(chunksLength: number): number {
     return Math.floor(this.MAX_TOKENS / chunksLength);
+  }
+
+  private async generateModelResponse<T>(
+    messages: ChatCompletionMessageParam[],
+  ): Promise<T> {
+    const openAiModel = this.configService.get<string>('OPENAI_MODEL');
+    const { choices } = await this.openai.chat.completions.create({
+      messages,
+      model: openAiModel,
+      response_format: { type: 'json_object' },
+    });
+    return JSON.parse(choices[0].message.content) as T;
   }
 
   private async keyPointsExtraction(
@@ -63,8 +80,10 @@ export class OpenAIService {
     userTerms: UserTerm[],
   ): Promise<number[]> {
     const siteTermsProp: string = `Site Terms: ${terms.join('\n')}`;
+    console.log('befre');
+    console.log(userTerms, 'userTerms', JSON.stringify(userTerms));
+    console.log('afte');
     const userTermsProp: string = `User terms: + ${JSON.stringify(userTerms)}`;
-
     const response: OpenAI.Chat.ChatCompletion =
       await this.openai.chat.completions.create({
         model: process.env.OPENAI_VIOLAIONS_MODEL,
@@ -78,6 +97,7 @@ export class OpenAIService {
           },
         ],
       });
+    console.log(response.choices.at(0).message.content, 'here w eare');
     return JSON.parse(response.choices.at(0).message.content);
   }
 
@@ -148,21 +168,10 @@ export class OpenAIService {
     return +response.choices.at(0).message.content;
   }
 
-  async rephraseTerm(title: string): Promise<string> {
-    const response: OpenAI.Chat.ChatCompletion =
-      await this.openai.chat.completions.create({
-        model: process.env.OPENAI_VIOLAIONS_MODEL,
-        messages: [
-          {
-            role: 'system',
-            content: process.env.OPENAI_REPHRASE_RESPONSE,
-          },
-          {
-            role: 'user',
-            content: title,
-          },
-        ],
-      });
-    return response.choices.at(0).message.content.trim();
+  async rephraseTerm(term: string): Promise<RephraseResponse> {
+    const messages: ChatCompletionMessageParam[] =
+      this.promptService.rephrasePrompt(term);
+
+    return this.generateModelResponse<RephraseResponse>(messages);
   }
 }

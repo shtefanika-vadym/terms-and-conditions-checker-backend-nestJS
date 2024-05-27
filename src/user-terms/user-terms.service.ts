@@ -133,7 +133,12 @@ export class UserTermsService {
   private async getSiteTermsWithFingerprint(
     userId: number,
     url: string,
-  ): Promise<{ id: number; terms: string[]; siteFingerprint: string }> {
+  ): Promise<{
+    id: number;
+    terms: string[];
+    isSame: boolean;
+    siteFingerprint: string;
+  }> {
     const { content: termsPageContent, termsUrl } =
       await this.fetchTermsPageContent(url);
 
@@ -145,6 +150,7 @@ export class UserTermsService {
       console.log('Same fingerprint');
       return {
         ...term,
+        isSame,
         siteFingerprint: lastFingerprint,
       };
     }
@@ -158,15 +164,16 @@ export class UserTermsService {
       pageContent: termsPageContent,
     });
 
-    return { terms, id, siteFingerprint: newFingerprint };
+    return { terms, id, isSame, siteFingerprint: newFingerprint };
   }
 
   async checkForTermsViolations(
     userId: number,
     url: string,
-  ): Promise<UserTerm[]> {
+  ): Promise<{ hasSameFingerprint: boolean }> {
     const {
       terms,
+      isSame,
       id: siteId,
       siteFingerprint,
     } = await this.getSiteTermsWithFingerprint(userId, url);
@@ -175,20 +182,19 @@ export class UserTermsService {
     const violatedTerms: UserTerm[] =
       await this.openAIService.getUserViolatedTerms(terms, userTerms);
 
-    this.violatedTermService.create({
+    const violatedTerm: ViolatedTerm = await this.violatedTermService.create({
       url,
       userId,
       siteFingerprint,
       terms: violatedTerms,
     });
 
-    this.userHistoryService.create(userId, siteId);
+    this.userHistoryService.create(userId, siteId, violatedTerm.id);
 
-    return violatedTerms;
+    return { hasSameFingerprint: isSame };
   }
 
-  async rephrase(dto: CreateUserTermDto): Promise<RephraseResponse> {
-    const title: string = await this.openAIService.rephraseTerm(dto.title);
-    return { title, isBlocked: title === process.env.OPENAI_NO_RULE_FOUND };
+  async rephrase({ title }: CreateUserTermDto): Promise<RephraseResponse> {
+    return this.openAIService.rephraseTerm(title);
   }
 }

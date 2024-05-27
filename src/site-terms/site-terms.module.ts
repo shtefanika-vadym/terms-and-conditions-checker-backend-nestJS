@@ -5,10 +5,11 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { SiteTerm } from 'src/site-terms/site-terms.model';
 import { Md5Service } from 'src/md5/md5.service';
 import { OpenAIService } from 'src/openai/openai.service';
+import { PromptService } from 'src/prompt/prompt.service';
 
 @Module({
   controllers: [SiteTermsController],
-  providers: [SiteTermsService, Md5Service, OpenAIService],
+  providers: [SiteTermsService, Md5Service, OpenAIService, PromptService],
   imports: [TypeOrmModule.forFeature([SiteTerm])],
 })
 export class SiteTermsModule {}

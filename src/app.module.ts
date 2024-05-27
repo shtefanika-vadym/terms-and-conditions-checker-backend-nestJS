@@ -17,11 +17,13 @@ import { ViolatedTermsModule } from './violated-terms/violated-terms.module';
 import { ViolatedTerm } from 'src/violated-terms/violated-terms.model';
 import { UserHistoryModule } from './user-history/user-history.module';
 import { UserHistory } from 'src/user-history/user-history.model';
+import { PromptService } from './prompt/prompt.service';
 
 @Module({
   imports: [
     HttpModule,
     ConfigModule.forRoot({
+      isGlobal: true,
       envFilePath: '.env',
     }),
     TypeOrmModule.forRoot({
@@ -38,10 +40,10 @@ import { UserHistory } from 'src/user-history/user-history.model';
     UsersModule,
     SiteTermsModule,
     UserTermsModule,
-    ViolatedTermsModule,
     UserHistoryModule,
+    ViolatedTermsModule,
   ],
   controllers: [AppController],
-  providers: [PuppeteerService, OpenAIService, GoogleService],
+  providers: [PuppeteerService, OpenAIService, GoogleService, PromptService],
 })
 export class AppModule {}

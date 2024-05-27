@@ -41,11 +41,11 @@ export class UserTermsController {
     return this.userTermsService.deleteUserTerm(userId, id);
   }
 
-  @Post('/identify-violated')
+  @Post('/terms-violations')
   async checkForTermsViolations(
     @UserId() userId: number,
     @Query('site') site: string,
-  ): Promise<UserTerm[]> {
+  ): Promise<{ hasSameFingerprint: boolean }> {
     return this.userTermsService.checkForTermsViolations(userId, site);
   }
 

@@ -7,6 +7,7 @@ import {
 } from 'typeorm';
 import { User } from 'src/users/users.model';
 import { SiteTerm } from 'src/site-terms/site-terms.model';
+import { ViolatedTerm } from 'src/violated-terms/violated-terms.model';
 
 @Entity({ name: 'user_history' })
 export class UserHistory {
@@ -26,4 +27,11 @@ export class UserHistory {
   @ManyToOne(() => SiteTerm, (site: SiteTerm) => site)
   @JoinColumn({ name: 'site_id' })
   site: SiteTerm;
+
+  @Column({ type: 'integer', nullable: false })
+  violated_term_id: number;
+
+  @ManyToOne(() => ViolatedTerm, (violatedTerm: ViolatedTerm) => violatedTerm)
+  @JoinColumn({ name: 'violated_term_id' })
+  violated_term: ViolatedTerm;
 }

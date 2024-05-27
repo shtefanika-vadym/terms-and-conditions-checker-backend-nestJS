@@ -10,6 +10,7 @@ import { SiteTermsService } from 'src/site-terms/site-terms.service';
 import { SiteTerm } from 'src/site-terms/site-terms.model';
 import { User } from 'src/users/users.model';
 import { UsersService } from 'src/users/users.service';
+import { PromptService } from 'src/prompt/prompt.service';
 
 @Module({
   controllers: [ViolatedTermsController],
@@ -19,6 +20,7 @@ import { UsersService } from 'src/users/users.service';
     UsersService,
     OpenAIService,
     SiteTermsService,
+    PromptService,
   ],
   imports: [
     TypeOrmModule.forFeature([User, ViolatedTerm, SiteTerm]),

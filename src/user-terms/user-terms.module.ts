@@ -17,6 +17,7 @@ import { User } from 'src/users/users.model';
 import { UsersService } from 'src/users/users.service';
 import { UserHistory } from 'src/user-history/user-history.model';
 import { UserHistoryService } from 'src/user-history/user-history.service';
+import { PromptService } from 'src/prompt/prompt.service';
 
 @Module({
   controllers: [UserTermsController],
@@ -25,6 +26,7 @@ import { UserHistoryService } from 'src/user-history/user-history.service';
     PuppeteerService,
     GoogleService,
     OpenAIService,
+    PromptService,
     ViolatedTermsService,
     SiteTermsService,
     Md5Service,

@@ -8,6 +8,9 @@ import { ConfigService } from '@nestjs/config';
 import { PromptService } from 'src/prompt/prompt.service';
 import { ChatCompletionMessageParam } from 'openai/src/resources/chat/completions';
 import { RephraseResponse } from 'src/user-terms/response/rephrase-response';
+import { RankTermResponse } from 'src/user-terms/response/rank-term-response';
+import { ViolationTermResponse } from 'src/user-terms/response/violation-term-response';
+import { KeyPointsResponse } from 'src/user-terms/response/key-points-response';
 
 @Injectable()
 export class OpenAIService {
@@ -46,75 +49,40 @@ export class OpenAIService {
     return JSON.parse(choices[0].message.content) as T;
   }
 
-  private async keyPointsExtraction(
-    text: string,
-    maxSummaryTokens: number,
-  ): Promise<string> {
-    const response: OpenAI.Chat.ChatCompletion =
-      await this.openai.chat.completions.create({
-        model: process.env.OPENAI_KEY_POINTS_MODEL,
-        messages: [
-          {
-            role: 'system',
-            content: `${process.env.OPENAI_KEY_POINTS_RESPONSE} ${maxSummaryTokens} tokens.`,
-          },
-          {
-            role: 'user',
-            content:
-              text +
-              'Response should be an array of strings. Without any additional text.',
-          },
-        ],
-      });
-    const result: string = response.choices.at(0).message.content.trim();
+  private async keyPointsExtraction(siteTerms: string): Promise<string[]> {
+    const messages: ChatCompletionMessageParam[] =
+      this.promptService.keyPointsPrompt(siteTerms);
 
-    if (result.includes(process.env.OPENAI_NO_TERMS_FOUND)) {
+    const { terms } =
+      await this.generateModelResponse<KeyPointsResponse>(messages);
+
+    if (!terms.length) {
       console.log('No terms found.');
       throw new Error(process.env.OPENAI_NO_TERMS_FOUND);
     }
-    return result;
+    return terms;
   }
 
   private async violatedTerms(
     terms: string[],
     userTerms: UserTerm[],
   ): Promise<number[]> {
-    const siteTermsProp: string = `Site Terms: ${terms.join('\n')}`;
-    console.log('befre');
-    console.log(userTerms, 'userTerms', JSON.stringify(userTerms));
-    console.log('afte');
-    const userTermsProp: string = `User terms: + ${JSON.stringify(userTerms)}`;
-    const response: OpenAI.Chat.ChatCompletion =
-      await this.openai.chat.completions.create({
-        model: process.env.OPENAI_VIOLAIONS_MODEL,
-        messages: [
-          {
-            role: 'user',
-            content:
-              siteTermsProp +
-              userTermsProp +
-              process.env.OPENAI_VIOLATIONS_RESPONSE,
-          },
-        ],
-      });
-    console.log(response.choices.at(0).message.content, 'here w eare');
-    return JSON.parse(response.choices.at(0).message.content);
+    const messages: ChatCompletionMessageParam[] =
+      this.promptService.violationPrompt(terms, userTerms);
+
+    const { violatedTerms } =
+      await this.generateModelResponse<ViolationTermResponse>(messages);
+    return violatedTerms;
   }
 
   async listPointsByChunks(chunks: string[]): Promise<string[]> {
     try {
-      const keyPoints: string[] = await Promise.all(
-        chunks.map(async (chunk: string): Promise<string> => {
-          return await this.keyPointsExtraction(
-            chunk,
-            this.getMaxTokensForSummary(chunks.length),
-          );
+      const keyPoints: string[][] = await Promise.all(
+        chunks.map(async (chunk: string): Promise<string[]> => {
+          return await this.keyPointsExtraction(chunk);
         }),
       );
-      return keyPoints
-        .map((keyPoint: string): string[] => keyPoint.split('\n'))
-        .flat()
-        .map((keyPoint: string): string => keyPoint.replace('- ', '').trim());
+      return keyPoints.flat();
     } catch (err) {
       return [];
     }
@@ -154,18 +122,11 @@ export class OpenAIService {
     return result;
   }
 
-  async getTermRank(term: string): Promise<number> {
-    const response: OpenAI.Chat.ChatCompletion =
-      await this.openai.chat.completions.create({
-        model: process.env.OPENAI_VIOLAIONS_MODEL,
-        messages: [
-          {
-            role: 'user',
-            content: term + process.env.OPENAI_RANKING_RESPONSE,
-          },
-        ],
-      });
-    return +response.choices.at(0).message.content;
+  async getTermRank(term: string): Promise<RankTermResponse> {
+    const messages: ChatCompletionMessageParam[] =
+      this.promptService.rankPrompt(term);
+
+    return this.generateModelResponse<RankTermResponse>(messages);
   }
 
   async rephraseTerm(term: string): Promise<RephraseResponse> {

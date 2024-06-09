@@ -23,6 +23,7 @@ export class UserHistoryService {
       select: {
         id: true,
         site: {
+          terms: true,
           site_url: true,
           terms_url: true,
         },

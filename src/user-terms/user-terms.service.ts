@@ -59,12 +59,8 @@ export class UserTermsService {
     userTerm.user_id = userId;
     userTerm.title = title;
 
-    try {
-      await this.userTermsRepository.save(userTerm);
-      await this.usersService.updateUserFingerprint(userId);
-    } catch (e) {
-      return { message: 'Term already exists' };
-    }
+    await this.userTermsRepository.save(userTerm);
+    this.usersService.updateUserFingerprint(userId);
 
     return { message: 'Term created successfully' };
   }
@@ -82,6 +78,7 @@ export class UserTermsService {
     }
 
     await this.userTermsRepository.remove(term);
+    this.usersService.updateUserFingerprint(userId);
 
     return { message: 'Term deleted successfully' };
   }

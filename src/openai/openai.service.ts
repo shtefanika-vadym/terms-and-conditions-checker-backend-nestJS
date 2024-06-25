@@ -6,17 +6,19 @@ import * as process from 'process';
 import { UserTerm } from 'src/user-terms/user-terms.model';
 import { ConfigService } from '@nestjs/config';
 import { PromptService } from 'src/prompt/prompt.service';
-import { ChatCompletionMessageParam } from 'openai/src/resources/chat/completions';
+import Instructor, { InstructorClient } from '@instructor-ai/instructor';
 import { RephraseResponse } from 'src/user-terms/response/rephrase-response';
 import { RankTermResponse } from 'src/user-terms/response/rank-term-response';
 import { ViolationTermResponse } from 'src/user-terms/response/violation-term-response';
 import { KeyPointsResponse } from 'src/user-terms/response/key-points-response';
+import { Prompt } from 'src/prompt/intrerfaces/prompt.interface';
 
 @Injectable()
 export class OpenAIService {
   private readonly openai: OpenAI;
   private readonly MAX_TOKENS: number;
   private readonly tokenizer: GPT3Tokenizer;
+  private readonly client: InstructorClient<OpenAI>;
 
   constructor(
     private readonly configService: ConfigService,
@@ -25,7 +27,13 @@ export class OpenAIService {
     this.MAX_TOKENS = +this.configService.get<string>('OPENAI_MAX_TOKENS');
     this.openai = new OpenAI({
       apiKey: this.configService.get<string>('OPENAI_KEY'),
+      organization: this.configService.get<string>('OPENAI_ORGANIZATION_ID'),
     });
+    this.client = Instructor({
+      mode: 'TOOLS',
+      client: this.openai,
+    });
+
     this.tokenizer = new GPT3Tokenizer({ type: 'gpt3' });
   }
 
@@ -37,24 +45,28 @@ export class OpenAIService {
     return Math.floor(this.MAX_TOKENS / chunksLength);
   }
 
-  private async generateModelResponse<T>(
-    messages: ChatCompletionMessageParam[],
-  ): Promise<T> {
+  private async generateModelResponse<T>(prompt: Prompt): Promise<T> {
+    const { messages, schema } = prompt;
     const openAiModel = this.configService.get<string>('OPENAI_MODEL');
-    const { choices } = await this.openai.chat.completions.create({
-      messages,
+
+    const { _meta, ...rest } = await this.client.chat.completions.create({
+      max_retries: 2,
       model: openAiModel,
-      response_format: { type: 'json_object' },
+      messages: messages,
+      response_model: {
+        schema: schema,
+        name: 'generateModelResponse',
+      },
     });
-    return JSON.parse(choices[0].message.content) as T;
+    console.log(_meta.usage);
+    return rest as T;
   }
 
   private async keyPointsExtraction(siteTerms: string): Promise<string[]> {
-    const messages: ChatCompletionMessageParam[] =
-      this.promptService.keyPointsPrompt(siteTerms);
+    const prompt: Prompt = this.promptService.keyPointsPrompt(siteTerms);
 
     const { terms } =
-      await this.generateModelResponse<KeyPointsResponse>(messages);
+      await this.generateModelResponse<KeyPointsResponse>(prompt);
 
     if (!terms.length) {
       console.log('No terms found.');
@@ -67,11 +79,10 @@ export class OpenAIService {
     terms: string[],
     userTerms: UserTerm[],
   ): Promise<number[]> {
-    const messages: ChatCompletionMessageParam[] =
-      this.promptService.violationPrompt(terms, userTerms);
+    const prompt: Prompt = this.promptService.violationPrompt(terms, userTerms);
 
     const { violatedTerms } =
-      await this.generateModelResponse<ViolationTermResponse>(messages);
+      await this.generateModelResponse<ViolationTermResponse>(prompt);
     return violatedTerms;
   }
 
@@ -123,16 +134,12 @@ export class OpenAIService {
   }
 
   async getTermRank(term: string): Promise<RankTermResponse> {
-    const messages: ChatCompletionMessageParam[] =
-      this.promptService.rankPrompt(term);
-
-    return this.generateModelResponse<RankTermResponse>(messages);
+    const prompt: Prompt = this.promptService.rankPrompt(term);
+    return this.generateModelResponse<RankTermResponse>(prompt);
   }
 
   async rephraseTerm(term: string): Promise<RephraseResponse> {
-    const messages: ChatCompletionMessageParam[] =
-      this.promptService.rephrasePrompt(term);
-
-    return this.generateModelResponse<RephraseResponse>(messages);
+    const prompt: Prompt = this.promptService.rephrasePrompt(term);
+    return this.generateModelResponse<RephraseResponse>(prompt);
   }
 }

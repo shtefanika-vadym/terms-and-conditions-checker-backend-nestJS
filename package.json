@@ -26,6 +26,7 @@
   },
   "dependencies": {
     "@gradientai/nodejs-sdk": "^1.11.0",
+    "@instructor-ai/instructor": "^1.5.0",
     "@nestjs/axios": "^3.0.0",
     "@nestjs/common": "^10.0.0",
     "@nestjs/config": "^3.0.0",
@@ -45,7 +46,8 @@
     "puppeteer": "^21.1.0",
     "reflect-metadata": "^0.1.13",
     "rxjs": "^7.8.1",
-    "typeorm": "^0.3.17"
+    "typeorm": "^0.3.17",
+    "zod": "^3.22.4"
   },
   "devDependencies": {
     "@nestjs/cli": "^10.0.0",
